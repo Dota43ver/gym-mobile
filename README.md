@@ -1,48 +1,30 @@
 # Gym Mobile
 
-Aplicación Android en desarrollo para organizar rutinas de gimnasio por día de la
-semana, con una interfaz sencilla y modo oscuro. El objetivo es guardar varias
-rutinas y elegir cuál seguir, sin perder las anteriores.
+Aplicación Android para organizar tus rutinas de gimnasio y registrar lo que
+completaste, con interfaz oscura y datos locales. Puedes guardar varios planes
+semanales, cambiar el activo y volver al anterior sin perder ejercicios ni historial.
 
-## Estado actual
+## Qué puedes hacer
 
-La base está creada con **Expo SDK 57, React Native y TypeScript**. Incluye una
-pantalla de bienvenida oscura, manejo de áreas seguras y comprobaciones
-automatizadas. La pantalla ya se visualizó en un teléfono Android real mediante
-Expo Go.
+- Crear, renombrar, duplicar y eliminar rutinas de lunes a domingo.
+- Elegir una rutina activa que se repite cada semana; un día vacío es descanso.
+- Agregar, editar, eliminar, ordenar y copiar ejercicios entre días.
+- Guardar nombre, series, repeticiones, **peso opcional en kg y notas**. El peso
+  acepta punto o coma decimal; dejarlo vacío es distinto de indicar cero.
+- Marcar y desmarcar ejercicios completados en **Today**. El historial conserva
+  una copia del nombre de la rutina y de cada ejercicio, peso y notas por fecha
+  local, aunque después edites o elimines el plan.
+- Exportar respaldos JSON e importarlos desde **Settings**, con validación y
+  confirmación antes de reemplazar todos los datos.
 
-**Todavía no están implementadas la gestión de rutinas ni la persistencia de
-datos. No hay un APK disponible ni una configuración de EAS Build.**
+La interfaz está en inglés. El modo oscuro es permanente en esta versión.
+No hay cuentas, anuncios, sincronización, videos ni servicios pagos integrados.
+Cada persona que instale la aplicación tendrá sus propios datos.
 
-## Funcionalidades previstas
+## Probar en Android
 
-- Crear varias rutinas semanales con nombre, organizadas de lunes a domingo y con
-  días de descanso.
-- Elegir una rutina activa que se repita cada semana; cambiar a otra y volver a
-  una anterior sin eliminarla.
-- Agregar, editar, eliminar, ordenar y copiar ejercicios entre días. Cada ejercicio
-  tendrá **nombre, series, repeticiones, peso opcional y notas**.
-- Guardar las rutinas localmente para consultarlas sin conexión, sin cuentas ni
-  sincronización entre personas.
-- Incorporar registros de entrenamiento por fecha y respaldos exportables e
-  importables. Completar un entrenamiento no deberá modificar la rutina semanal.
-
-La entrega prevista es un **APK independiente y compartible** para teléfonos
-Android compatibles. Quienes lo instalen no necesitarán Expo Go ni la computadora
-de desarrollo. La versión mínima de Android se definirá al preparar esa entrega;
-no se distribuye como aplicación para iPhone.
-
-## Probar la base en Android
-
-### Requisitos
-
-- [mise](https://mise.jdx.dev/getting-started.html), para usar la versión de
-  **Node.js 24.21.0** fijada en `mise.toml` sin cambiar la configuración global.
-- Un teléfono Android con [Expo Go compatible con SDK 57](https://expo.dev/go).
-  Si la versión de la tienda no es compatible, seleccionar Android y SDK 57 en
-  ese enlace oficial.
-
-Desde la carpeta del proyecto:
+Necesitas [mise](https://mise.jdx.dev/getting-started.html) y
+[Expo Go compatible con SDK 57](https://expo.dev/go) en el teléfono.
 
 ```sh
 mise install
@@ -50,60 +32,105 @@ mise exec -- npm ci
 mise exec -- npm start
 ```
 
-Conectar el teléfono y la computadora a la misma red Wi-Fi. Abrir **Scan QR** en
-Expo Go y escanear el código que aparece en la terminal. Mantener el servidor de
-desarrollo abierto durante la prueba.
-
-Este flujo no requiere instalar el SDK de Android. El comando `npm run android`
-está destinado a un entorno con emulador o dispositivo conectado y las
-herramientas de desarrollo Android correspondientes.
-
-### Si el teléfono no puede conectarse
-
-Si Expo Go muestra `Failed to download remote update`, puede existir un problema
-de conectividad con el servidor; el mensaje por sí solo no identifica la causa.
-Cuando la conexión directa está bloqueada, detener el servidor con `Ctrl+C` y
-probar un túnel:
+Conecta teléfono y computadora a la misma red Wi-Fi y escanea el QR desde Expo Go.
+Mantén la terminal abierta. Si la red impide la conexión directa:
 
 ```sh
 mise exec -- npm start -- --tunnel
 ```
 
-Si Expo solicita instalar `@expo/ngrok`, aceptar la instalación. Escanear el
-**nuevo QR** desde Expo Go. El túnel requiere internet y puede hacer más lentas
-las cargas y recargas; no cambia el objetivo de funcionamiento offline de la
-aplicación final.
+Acepta la instalación de `@expo/ngrok` si Expo la solicita y escanea el nuevo QR.
+El túnel requiere internet: eso no cambia el funcionamiento offline del APK final.
+No hace falta instalar Android Studio para este flujo.
 
-## Comprobaciones de desarrollo
+## Generar un APK independiente
+
+Está preparado el perfil `preview` de EAS Build. **Todavía no se generó un APK ni
+se verificaron estas funciones nuevas en un dispositivo real.** Expo Go se usa
+solo durante el desarrollo; quienes reciban el APK no lo necesitan.
+
+Con una cuenta Expo propia:
 
 ```sh
+mise exec -- npx eas-cli login
+mise exec -- npx eas-cli build --platform android --profile preview
+```
+
+En la primera ejecución, vincula o crea el proyecto EAS cuando lo solicite y
+permite gestionar las credenciales Android. No hay identificadores de cuenta ni
+credenciales inventados en el repositorio. EAS puede modificar la configuración
+para asociar tu proyecto: conserva ese cambio para compilaciones futuras.
+
+Descarga el APK desde el enlace del build e instálalo en un Android compatible,
+autorizando la instalación desde esa fuente si Android lo solicita. Comparte ese
+APK, no el QR de desarrollo. Conserva la misma firma y el identificador
+`com.dota43ver.gymmobile` para actualizaciones; aumenta `android.versionCode`.
+Las compilaciones en la nube están sujetas a los límites vigentes de tu cuenta;
+no se inició ninguna compilación ni contratación de servicios automáticamente.
+
+Referencia: [distribución de APK con Expo](https://docs.expo.dev/build-reference/apk/).
+
+## Datos y respaldos
+
+Los datos se guardan en SQLite en el teléfono. Las escrituras se serializan y la
+pantalla solo publica el cambio tras guardarlo correctamente. Si falla la carga,
+se muestra un error y se permite reintentar, sin sobrescribir datos con un estado
+vacío.
+
+El respaldo es JSON versión 1, máximo **5 MB**. La importación valida estructura,
+identificadores únicos, fechas, números y referencia de rutina activa; solo
+reemplaza los datos en una transacción después de confirmar. Los registros
+históricos pueden referenciar rutinas eliminadas porque contienen sus propias
+copias completas. Importar no mezcla datos.
+
+**Exporta con regularidad:** desinstalar la aplicación, borrar sus datos o perder
+el teléfono puede eliminar la información local. El archivo de respaldo no está
+cifrado y contiene pesos y notas; compártelo únicamente con quien corresponda.
+
+Para mantener acotada esta primera versión: hasta 100 rutinas, 200 ejercicios por
+día y 20.000 registros completados, además del límite de tamaño. Si se alcanza un
+límite, la escritura se rechaza sin descartar los datos existentes.
+
+## Desarrollo y comprobaciones
+
+```sh
+mise exec -- npm run format
 mise exec -- npm test
 mise exec -- npm run typecheck
 mise exec -- npm run format:check
 mise exec -- npx expo install --check
 mise exec -- npx expo-doctor
+mise exec -- npx expo export --platform android --output-dir /tmp/gym-mobile-export
 ```
 
-Para aplicar el formato antes de comprobar los cambios:
+Las pruebas cubren validación de peso/notas, copias y orden, historial por fecha,
+escrituras fallidas, recarga, importaciones y el flujo de creación/completado en
+la interfaz. Los módulos nativos se simulan en Jest: estos controles **no prueban
+SQLite ni el selector/compartidor de archivos en un teléfono real**.
 
-```sh
-mise exec -- npm run format
-```
+Antes de distribuir, comprobar en un Android:
 
-Las pruebas utilizan Jest, el preset de Expo y React Native Testing Library. La
-implementación de nuevas funciones sigue el ciclo de escribir primero una prueba
-que falle, implementar el comportamiento y refactorizar.
+- Crear dos rutinas, alternarlas y editar/copiar/reordenar ejercicios.
+- Cerrar y reabrir la app en modo avión y verificar pesos y notas.
+- Completar ejercicios, cambiar de fecha y revisar el historial.
+- Exportar, modificar datos, importar el respaldo y comprobar la restauración.
+- Cancelar importaciones, rechazar archivos inválidos y verificar que nada cambia.
+- Instalar el APK y abrirlo sin Expo Go ni servidor de desarrollo.
 
-## Archivos principales
+## Organización
 
-| Archivo                  | Función                                             |
-| ------------------------ | --------------------------------------------------- |
-| `App.tsx`                | Pantalla inicial oscura.                            |
-| `__tests__/App.test.tsx` | Prueba del comportamiento de la pantalla inicial.   |
-| `app.json`               | Configuración de la aplicación Expo.                |
-| `mise.toml`              | Versión de Node.js específica del proyecto.         |
-| `package-lock.json`      | Versiones de dependencias para instalar con npm ci. |
+| Archivo                                      | Responsabilidad                                          |
+| -------------------------------------------- | -------------------------------------------------------- |
+| `App.tsx`                                    | Navegación, carga, errores y coordinación de escrituras. |
+| `src/domain.ts`                              | Rutinas, ejercicios, fechas, historial y validación.     |
+| `src/store.ts`, `src/storage.ts`             | Escrituras serializadas y persistencia SQLite.           |
+| `src/Routines.tsx`, `src/ExerciseEditor.tsx` | Edición de la semana y ejercicios.                       |
+| `src/Training.tsx`, `src/ui.tsx`             | Entrenamiento, historial y componentes oscuros.          |
+| `src/backups.ts`                             | Selección y exportación de archivos.                     |
+| `__tests__/`                                 | Pruebas de comportamiento y límites de datos.            |
+| `eas.json`, `app.json`                       | Configuración Expo y perfil de APK.                      |
 
-**Próximo paso:** implementar las rutinas semanales guardadas, sus ejercicios y
-la selección de la rutina activa, incluyendo peso y notas desde la primera
-versión funcional.
+Para este MVP personal se guarda un documento versionado en una fila SQLite:
+facilita una restauración atómica, a cambio de reescribir el documento en cada
+cambio. Si crece hacia grandes historiales o sincronización, convendrá migrar a
+tablas normalizadas. No es una app web ni una distribución para iPhone.

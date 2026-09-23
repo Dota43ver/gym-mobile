@@ -4,6 +4,10 @@
   "main": "index.ts",
   "dependencies": {
     "expo": "~57.0.24",
+    "expo-document-picker": "~57.0.2",
+    "expo-file-system": "~57.0.7",
+    "expo-sharing": "~57.0.21",
+    "expo-sqlite": "~57.0.3",
     "expo-status-bar": "~57.0.1",
     "expo-system-ui": "~57.0.4",
     "react": "19.2.3",
@@ -25,8 +29,8 @@
     "typecheck": "tsc --noEmit",
     "test": "jest --runInBand",
     "test:watch": "jest --watch",
-    "format": "prettier --write App.tsx index.ts __tests__ package.json app.json tsconfig.json README.md",
-    "format:check": "prettier --check App.tsx index.ts __tests__ package.json app.json tsconfig.json README.md"
+    "format": "prettier --write App.tsx index.ts src __tests__ package.json app.json eas.json tsconfig.json README.md",
+    "format:check": "prettier --check App.tsx index.ts src __tests__ package.json app.json eas.json tsconfig.json README.md"
   },
   "private": true,
   "jest": {

@@ -16,11 +16,14 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.dota43ver.gymmobile",
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "backgroundColor": "#101216"
+    "backgroundColor": "#101216",
+    "plugins": ["expo-sqlite", "expo-sharing"]
   }
 }
