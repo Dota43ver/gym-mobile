@@ -11,12 +11,18 @@ import {
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { localDate, State } from "./src/domain";
+import { userMessage, localDate, State } from "./src/domain";
 import { store } from "./src/storage";
 import { exportBackup, pickBackup } from "./src/backups";
-import { Button, Card, styles } from "./src/ui";
+import { TabButton, Button, Card, styles } from "./src/ui";
 import { Routines } from "./src/Routines";
 import { Today, History } from "./src/Training";
+const tabLabels = {
+  Today: "Hoy",
+  Routines: "Rutinas",
+  History: "Historial",
+  Settings: "Ajustes",
+};
 type Tab = "Today" | "Routines" | "History" | "Settings";
 export default function App() {
   const [state, setState] = useState<State | null>(null),
@@ -32,7 +38,9 @@ export default function App() {
     try {
       setState(await store.load());
     } catch (e) {
-      setError(`Could not open saved data. ${(e as Error).message}`);
+      setError(
+        "No se pudieron abrir los datos guardados. Reintenta la carga; tus datos no fueron reemplazados.",
+      );
     } finally {
       setBusy(false);
     }
@@ -62,7 +70,12 @@ export default function App() {
       setState(await store.mutate(change));
       return true;
     } catch (e) {
-      setError(`Not saved. ${(e as Error).message}`);
+      setError(
+        userMessage(
+          e,
+          "No se guardaron los cambios. Comprueba el espacio disponible y vuelve a intentar.",
+        ),
+      );
       return false;
     } finally {
       lock.current = false;
@@ -79,7 +92,12 @@ export default function App() {
       if (kind === "export") await exportBackup(state);
       else replacement = await pickBackup();
     } catch (e) {
-      setError((e as Error).message);
+      setError(
+        userMessage(
+          e,
+          "No se pudo completar el respaldo. Comprueba el archivo o intenta nuevamente.",
+        ),
+      );
     } finally {
       lock.current = false;
       setBusy(false);
@@ -87,12 +105,12 @@ export default function App() {
     if (replacement) {
       const data = replacement;
       Alert.alert(
-        "Replace all local data?",
-        `This backup contains ${data.routines.length} routines and ${data.logs.length} completed exercises. Your current data will be replaced, not merged. Export a backup first if you want to keep it.`,
+        "¿Reemplazar todos los datos locales?",
+        `Este respaldo contiene ${data.routines.length} rutinas y ${data.logs.length} ejercicios completados. Los datos actuales serán reemplazados, no combinados. Exporta primero un respaldo si quieres conservarlos.`,
         [
-          { text: "Cancel", style: "cancel" },
+          { text: "Cancelar", style: "cancel" },
           {
-            text: "Replace data",
+            text: "Reemplazar datos",
             style: "destructive",
             onPress: () =>
               void mutate(() => data).then((ok) => {
@@ -120,12 +138,12 @@ export default function App() {
           >
             <Text style={styles.eyebrow}>GYM MOBILE</Text>
             <Text accessibilityRole="header" style={styles.title}>
-              {tab === "Today" ? "Make room for progress" : tab}
+              {tab === "Today" ? "Haz espacio para progresar" : tabLabels[tab]}
             </Text>
             {busy && (
               <ActivityIndicator
                 color="#A8E6A3"
-                accessibilityLabel="Saving or loading"
+                accessibilityLabel="Guardando o cargando"
               />
             )}
             {!!error && (
@@ -135,7 +153,7 @@ export default function App() {
                 </Text>
                 {!state && (
                   <Button
-                    label="Retry loading"
+                    label="Reintentar carga"
                     disabled={busy}
                     onPress={() => void load()}
                   />
@@ -165,34 +183,39 @@ export default function App() {
                 {tab === "Settings" && (
                   <>
                     <Card>
-                      <Text style={styles.heading}>Offline. Yours.</Text>
+                      <Text style={styles.heading}>
+                        Sin conexión. Tus datos.
+                      </Text>
                       <Text style={styles.text}>
-                        Your routines and history stay on this device. No
-                        account, cloud sync or ads. Dark mode is always on.
+                        Tus rutinas e historial se guardan en este dispositivo.
+                        Sin cuenta, sincronización ni anuncios. El modo oscuro
+                        está siempre activo.
                       </Text>
                     </Card>
                     <Card>
-                      <Text style={styles.heading}>Keep a safe copy</Text>
+                      <Text style={styles.heading}>
+                        Conserva una copia segura
+                      </Text>
                       <Text style={styles.text}>
-                        Uninstalling the app or clearing its data can erase your
-                        training. Export backups regularly and save them
-                        somewhere safe. Backups contain your exercise names,
-                        weights and notes in readable JSON.
+                        Desinstalar la app o borrar sus datos puede eliminar tus
+                        entrenamientos. Exporta respaldos y guárdalos en un
+                        lugar seguro. Contienen nombres de ejercicios, pesos y
+                        notas en JSON legible.
                       </Text>
                       <Button
-                        label="Export backup"
+                        label="Exportar respaldo"
                         primary
                         disabled={busy}
                         onPress={() => void backup("export")}
                       />
                       <Button
-                        label="Import backup"
+                        label="Importar respaldo"
                         disabled={busy}
                         onPress={() => void backup("import")}
                       />
                       <Text style={styles.text}>
-                        Import replaces all local data after confirmation.
-                        Maximum file size: 5 MB.
+                        La importación reemplaza todos los datos locales después
+                        de confirmar. Tamaño máximo: 5 MB.
                       </Text>
                     </Card>
                   </>
@@ -204,8 +227,8 @@ export default function App() {
             {(["Today", "Routines", "History", "Settings"] as Tab[]).map(
               (t) => (
                 <View key={t} style={{ flex: 1 }}>
-                  <Button
-                    label={t}
+                  <TabButton
+                    label={tabLabels[t]}
                     primary={t === tab}
                     disabled={busy || !state}
                     onPress={() => setTab(t)}

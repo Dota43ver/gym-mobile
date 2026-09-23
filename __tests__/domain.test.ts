@@ -115,5 +115,5 @@ test("enforces byte size for non-ASCII backups", () => {
     parseBackup(
       JSON.stringify({ ...emptyState(), padding: "🏋".repeat(1_300_000) }),
     ),
-  ).toThrow("too large");
+  ).toThrow("demasiado grande");
 });

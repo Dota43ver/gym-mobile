@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Text } from "react-native";
-import { Exercise, exerciseFromForm } from "./domain";
+import { userMessage, Exercise, exerciseFromForm } from "./domain";
 import { Button, Card, Field, styles } from "./ui";
 export function ExerciseEditor({
   exercise,
@@ -27,43 +27,48 @@ export function ExerciseEditor({
       const e = exerciseFromForm(form, exercise?.id);
       await onSave(e);
     } catch (e) {
-      setError((e as Error).message);
+      setError(
+        userMessage(
+          e,
+          "No se pudo completar la operación. Intenta nuevamente.",
+        ),
+      );
     }
   }
   return (
     <Card>
       <Text style={styles.heading}>
-        {exercise ? "Edit exercise" : "New exercise"}
+        {exercise ? "Editar ejercicio" : "Nuevo ejercicio"}
       </Text>
       <Field
-        label="Exercise name"
+        label="Nombre del ejercicio"
         value={form.name}
         maxLength={100}
         onChangeText={(name) => setForm({ ...form, name })}
       />
       <Field
-        label="Sets"
+        label="Series"
         value={form.sets}
         keyboardType="number-pad"
         maxLength={3}
         onChangeText={(sets) => setForm({ ...form, sets })}
       />
       <Field
-        label="Reps"
+        label="Repeticiones"
         value={form.reps}
         keyboardType="number-pad"
         maxLength={3}
         onChangeText={(reps) => setForm({ ...form, reps })}
       />
       <Field
-        label="Weight (kg, optional)"
+        label="Peso (kg, opcional)"
         value={form.weight}
         keyboardType="decimal-pad"
         maxLength={12}
         onChangeText={(weight) => setForm({ ...form, weight })}
       />
       <Field
-        label="Notes (optional)"
+        label="Notas (opcional)"
         value={form.notes}
         multiline
         maxLength={2000}
@@ -75,12 +80,12 @@ export function ExerciseEditor({
         </Text>
       )}
       <Button
-        label="Save exercise"
+        label="Guardar ejercicio"
         primary
         disabled={busy}
         onPress={() => void save()}
       />
-      <Button label="Cancel" disabled={busy} onPress={onCancel} />
+      <Button label="Cancelar" disabled={busy} onPress={onCancel} />
     </Card>
   );
 }

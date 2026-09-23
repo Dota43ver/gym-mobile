@@ -1,4 +1,4 @@
-import { emptyState, parseBackup, State } from "./domain";
+import { UserError, emptyState, parseBackup, State } from "./domain";
 export interface StorageAdapter {
   read(): Promise<string | null>;
   write(value: string): Promise<void>;
@@ -17,7 +17,9 @@ export class Store {
   mutate(change: (s: State) => State): Promise<State> {
     const task = this.queue.then(async () => {
       if (!this.loaded)
-        throw new Error("Storage is not ready. Retry loading first.");
+        throw new UserError(
+          "El almacenamiento no está disponible. Reintenta la carga.",
+        );
       const next = change(this.state);
       const raw = JSON.stringify(next);
       parseBackup(raw);

@@ -11,13 +11,18 @@ semanales, cambiar el activo y volver al anterior sin perder ejercicios ni histo
 - Agregar, editar, eliminar, ordenar y copiar ejercicios entre días.
 - Guardar nombre, series, repeticiones, **peso opcional en kg y notas**. El peso
   acepta punto o coma decimal; dejarlo vacío es distinto de indicar cero.
-- Marcar y desmarcar ejercicios completados en **Today**. El historial conserva
+- Ver tarjetas compactas con nombre, series, repeticiones, peso y vista previa de notas.
+  El lápiz abre un menú para editar, subir/bajar, copiar o eliminar; las notas completas
+  se consultan al editar y en el historial.
+- Marcar y desmarcar ejercicios completados en **Hoy**. El historial conserva
   una copia del nombre de la rutina y de cada ejercicio, peso y notas por fecha
-  local, aunque después edites o elimines el plan.
-- Exportar respaldos JSON e importarlos desde **Settings**, con validación y
+  local, aunque después edites o elimines el plan. El check indica que se completaron
+  todas las series **hoy**, también al marcar desde otro día en Rutinas; no queda
+  marcado para semanas futuras.
+- Exportar respaldos JSON e importarlos desde **Ajustes**, con validación y
   confirmación antes de reemplazar todos los datos.
 
-La interfaz está en inglés. El modo oscuro es permanente en esta versión.
+La interfaz completa está en español. El modo oscuro es permanente en esta versión.
 No hay cuentas, anuncios, sincronización, videos ni servicios pagos integrados.
 Cada persona que instale la aplicación tendrá sus propios datos.
 
@@ -119,16 +124,16 @@ Antes de distribuir, comprobar en un Android:
 
 ## Organización
 
-| Archivo                                      | Responsabilidad                                          |
-| -------------------------------------------- | -------------------------------------------------------- |
-| `App.tsx`                                    | Navegación, carga, errores y coordinación de escrituras. |
-| `src/domain.ts`                              | Rutinas, ejercicios, fechas, historial y validación.     |
-| `src/store.ts`, `src/storage.ts`             | Escrituras serializadas y persistencia SQLite.           |
-| `src/Routines.tsx`, `src/ExerciseEditor.tsx` | Edición de la semana y ejercicios.                       |
-| `src/Training.tsx`, `src/ui.tsx`             | Entrenamiento, historial y componentes oscuros.          |
-| `src/backups.ts`                             | Selección y exportación de archivos.                     |
-| `__tests__/`                                 | Pruebas de comportamiento y límites de datos.            |
-| `eas.json`, `app.json`                       | Configuración Expo y perfil de APK.                      |
+| Archivo                                                                          | Responsabilidad                                          |
+| -------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `App.tsx`                                                                        | Navegación, carga, errores y coordinación de escrituras. |
+| `src/domain.ts`                                                                  | Rutinas, ejercicios, fechas, historial y validación.     |
+| `src/store.ts`, `src/storage.ts`                                                 | Escrituras serializadas y persistencia SQLite.           |
+| `src/Routines.tsx`, `src/ExerciseEditor.tsx`                                     | Edición de la semana y ejercicios.                       |
+| `src/Training.tsx`, `src/ui.tsx`, `src/ExerciseCard.tsx`, `src/ExerciseMenu.tsx` | Entrenamiento, historial y componentes oscuros.          |
+| `src/backups.ts`                                                                 | Selección y exportación de archivos.                     |
+| `__tests__/`                                                                     | Pruebas de comportamiento y límites de datos.            |
+| `eas.json`, `app.json`                                                           | Configuración Expo y perfil de APK.                      |
 
 Para este MVP personal se guarda un documento versionado en una fila SQLite:
 facilita una restauración atómica, a cambio de reescribir el documento en cada

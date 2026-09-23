@@ -121,10 +121,54 @@ export function ExerciseDetails({ exercise: e }: { exercise: Exercise }) {
     <>
       <Text style={styles.heading}>{e.name}</Text>
       <Text style={styles.text}>
-        {e.sets} sets × {e.reps} reps
-        {e.weight === null ? "" : ` · ${e.weight} kg`}
+        {e.sets} series × {e.reps} repeticiones
+        {e.weight === null ? "" : ` · ${String(e.weight).replace(".", ",")} kg`}
       </Text>
       {e.notes !== "" && <Text style={styles.text}>{e.notes}</Text>}
     </>
+  );
+}
+
+export function TabButton({
+  label,
+  onPress,
+  primary,
+  disabled,
+}: {
+  label: string;
+  onPress: () => void;
+  primary: boolean;
+  disabled: boolean;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ selected: primary, disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={{
+        minHeight: 48,
+        paddingHorizontal: 2,
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: 12,
+        backgroundColor: primary ? "#A8E6A3" : "#101216",
+        opacity: disabled ? 0.4 : 1,
+      }}
+    >
+      <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.8}
+        style={{
+          fontSize: 13,
+          fontWeight: "700",
+          color: primary ? "#112211" : "#BEC5CF",
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
   );
 }

@@ -1,11 +1,22 @@
+export class UserError extends Error {}
+export function userMessage(error: unknown, fallback: string) {
+  return error instanceof UserError ? error.message : fallback;
+}
+export function displayDate(date: string) {
+  return new Date(`${date}T12:00:00`).toLocaleDateString("es-AR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
 export const DAYS = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
+  "Lunes",
+  "Martes",
+  "Miércoles",
+  "Jueves",
+  "Viernes",
+  "Sábado",
+  "Domingo",
 ];
 export type Exercise = {
   id: string;
@@ -48,7 +59,9 @@ export const emptyState = (): State => ({
 export function routineName(name: string) {
   const n = name.trim();
   if (!n || n.length > 80)
-    throw new Error("Use a routine name between 1 and 80 characters.");
+    throw new UserError(
+      "El nombre de la rutina debe tener entre 1 y 80 caracteres.",
+    );
   return n;
 }
 export const newRoutine = (name: string): Routine => ({
@@ -63,7 +76,9 @@ export function exerciseFromForm(
   const name = form.name.trim(),
     weightText = form.weight.trim().replace(",", ".");
   if (!name || name.length > 100)
-    throw new Error("Use an exercise name between 1 and 100 characters.");
+    throw new UserError(
+      "El nombre del ejercicio debe tener entre 1 y 100 caracteres.",
+    );
   if (
     !/^\d+$/.test(form.sets) ||
     !/^\d+$/.test(form.reps) ||
@@ -72,16 +87,20 @@ export function exerciseFromForm(
     Number(form.sets) > 999 ||
     Number(form.reps) > 999
   )
-    throw new Error("Sets and reps must be whole numbers from 1 to 999.");
+    throw new UserError(
+      "Las series y repeticiones deben ser números enteros entre 1 y 999.",
+    );
   if (
     weightText !== "" &&
     (!/^\d+(\.\d+)?$/.test(weightText) ||
       !Number.isFinite(Number(weightText)) ||
       Number(weightText) > 10000)
   )
-    throw new Error("Weight must be between 0 and 10000 kg, or blank.");
+    throw new UserError(
+      "El peso debe estar entre 0 y 10000 kg, o quedar vacío.",
+    );
   if (form.notes.length > 2000)
-    throw new Error("Notes must be at most 2000 characters.");
+    throw new UserError("Las notas no pueden superar los 2000 caracteres.");
   return {
     id: existingId,
     name,
@@ -103,7 +122,7 @@ export const deleteRoutine = (s: State, rid: string): State => ({
 export function duplicateRoutine(r: Routine): Routine {
   return {
     id: id(),
-    name: routineName(`${r.name.slice(0, 73)} (copy)`),
+    name: routineName(`${r.name.slice(0, 72)} (copia)`),
     days: r.days.map((d) => d.map((e) => ({ ...e, id: id() }))),
   };
 }
@@ -114,7 +133,7 @@ export function copyExercise(
   target: number,
 ): Routine {
   const e = r.days[day].find((x) => x.id === eid);
-  if (!e) throw new Error("Exercise not found.");
+  if (!e) throw new UserError("No se encontró el ejercicio.");
   return {
     ...r,
     days: r.days.map((d, i) => (i === target ? [...d, { ...e, id: id() }] : d)),
@@ -196,16 +215,16 @@ function utf8Size(value: string) {
 }
 export function parseBackup(raw: string): State {
   if (raw.length > MAX_BACKUP_BYTES || utf8Size(raw) > MAX_BACKUP_BYTES)
-    throw new Error("Backup is too large (maximum 5 MB).");
+    throw new UserError("El respaldo es demasiado grande (máximo 5 MB).");
   let s: unknown;
   try {
     s = JSON.parse(raw);
   } catch {
-    throw new Error("This is not a valid JSON backup.");
+    throw new UserError("El archivo no es un respaldo JSON válido.");
   }
   const fail = () => {
-    throw new Error(
-      "Invalid or unsupported Gym Mobile backup. Nothing was replaced.",
+    throw new UserError(
+      "El respaldo de Gym Mobile no es válido o no es compatible. No se reemplazó ningún dato.",
     );
   };
   if (

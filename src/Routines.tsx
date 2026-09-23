@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Alert, Text, View } from "react-native";
 import {
   State,
+  userMessage,
   Routine,
   Exercise,
   DAYS,
@@ -13,8 +14,12 @@ import {
   copyExercise,
   moveExercise,
   weekday,
+  localDate,
+  toggleCompletion,
 } from "./domain";
-import { Button, Card, Field, ExerciseDetails, styles } from "./ui";
+import { Button, Card, Field, styles } from "./ui";
+import { ExerciseCard } from "./ExerciseCard";
+import { ExerciseMenu } from "./ExerciseMenu";
 import { ExerciseEditor } from "./ExerciseEditor";
 export type Mutate = (change: (s: State) => State) => Promise<boolean>;
 export function Routines({
@@ -32,6 +37,7 @@ export function Routines({
     [naming, setNaming] = useState<"new" | "rename" | null>(null),
     [editor, setEditor] = useState<Exercise | "new" | null>(null),
     [copying, setCopying] = useState<string | null>(null),
+    [menu, setMenu] = useState<string | null>(null),
     [error, setError] = useState("");
   const routine = state.routines.find((r) => r.id === selected);
   async function saveName() {
@@ -56,17 +62,22 @@ export function Routines({
       )
         setNaming(null);
     } catch (e) {
-      setError((e as Error).message);
+      setError(
+        userMessage(
+          e,
+          "No se pudo completar la operación. Intenta nuevamente.",
+        ),
+      );
     }
   }
   const saveRoutine = (r: Routine) => mutate((s) => updateRoutine(s, r));
   return (
     <>
       <Text style={styles.text}>
-        Build your week. Switch plans without losing your progress.
+        Organiza tu semana. Cambia de plan sin perder tu progreso.
       </Text>
       <Button
-        label="New routine"
+        label="Nueva rutina"
         primary
         disabled={busy || !!naming || !!editor}
         onPress={() => {
@@ -78,20 +89,20 @@ export function Routines({
       {naming && (
         <Card>
           <Field
-            label="Routine name"
+            label="Nombre de la rutina"
             value={name}
             maxLength={80}
             onChangeText={setName}
           />
           {!!error && <Text style={styles.error}>{error}</Text>}
           <Button
-            label="Save routine"
+            label="Guardar rutina"
             primary
             disabled={busy}
             onPress={() => void saveName()}
           />
           <Button
-            label="Cancel"
+            label="Cancelar"
             disabled={busy}
             onPress={() => setNaming(null)}
           />
@@ -99,10 +110,10 @@ export function Routines({
       )}
       {!state.routines.length && !naming && (
         <Card>
-          <Text style={styles.heading}>A plan that fits you</Text>
+          <Text style={styles.heading}>Un plan a tu medida</Text>
           <Text style={styles.text}>
-            Create your first weekly routine. Days without exercises are rest
-            days.
+            Crea tu primera rutina semanal. Los días sin ejercicios son días de
+            descanso.
           </Text>
         </Card>
       )}
@@ -111,7 +122,7 @@ export function Routines({
         state.routines.map((r) => (
           <Button
             key={r.id}
-            label={`${r.name}${r.id === state.activeId ? " · Active" : ""}${r.id === selected ? " · Selected" : ""}`}
+            label={`${r.name}${r.id === state.activeId ? " · Activa" : ""}${r.id === selected ? " · Seleccionada" : ""}`}
             primary={r.id === selected}
             disabled={busy}
             onPress={() => {
@@ -126,7 +137,7 @@ export function Routines({
             <Text style={styles.heading}>{routine.name}</Text>
             {routine.id !== state.activeId && (
               <Button
-                label="Use this routine"
+                label="Usar esta rutina"
                 primary
                 disabled={busy || !!editor}
                 onPress={() =>
@@ -137,7 +148,7 @@ export function Routines({
             {!editor && (
               <View style={styles.row}>
                 <Button
-                  label="Rename"
+                  label="Renombrar"
                   disabled={busy}
                   onPress={() => {
                     setName(routine.name);
@@ -146,7 +157,7 @@ export function Routines({
                   }}
                 />
                 <Button
-                  label="Duplicate"
+                  label="Duplicar"
                   disabled={busy}
                   onPress={() => {
                     const r = duplicateRoutine(routine);
@@ -159,17 +170,17 @@ export function Routines({
                   }}
                 />
                 <Button
-                  label="Delete routine"
+                  label="Eliminar rutina"
                   danger
                   disabled={busy}
                   onPress={() =>
                     Alert.alert(
-                      "Delete routine?",
-                      `Delete ${routine.name}? Workout history will be kept.`,
+                      "¿Eliminar rutina?",
+                      `¿Eliminar ${routine.name}? Se conservará el historial.`,
                       [
-                        { text: "Cancel", style: "cancel" },
+                        { text: "Cancelar", style: "cancel" },
                         {
-                          text: "Delete",
+                          text: "Eliminar",
                           style: "destructive",
                           onPress: () =>
                             void mutate((s) => deleteRoutine(s, routine.id)),
@@ -222,102 +233,110 @@ export function Routines({
           ) : (
             <>
               <Button
-                label="Add exercise"
+                label="Agregar ejercicio"
                 primary
                 disabled={busy}
                 onPress={() => setEditor("new")}
               />
               {!routine.days[day].length && (
                 <Card>
-                  <Text style={styles.heading}>Rest & recover</Text>
+                  <Text style={styles.heading}>Descanso y recuperación</Text>
                   <Text style={styles.text}>
-                    No exercises planned for this day.
+                    No hay ejercicios para este día.
                   </Text>
                 </Card>
               )}
-              {routine.days[day].map((e, i) => (
-                <Card key={e.id}>
-                  <ExerciseDetails exercise={e} />
-                  <View style={styles.row}>
-                    <Button
-                      label={`Edit ${e.name}`}
-                      disabled={busy}
-                      onPress={() => setEditor(e)}
-                    />
-                    <Button
-                      label={`Move ${e.name} up`}
-                      disabled={busy || i === 0}
-                      onPress={() =>
-                        void saveRoutine(moveExercise(routine, day, e.id, -1))
-                      }
-                    />
-                    <Button
-                      label={`Move ${e.name} down`}
-                      disabled={busy || i === routine.days[day].length - 1}
-                      onPress={() =>
-                        void saveRoutine(moveExercise(routine, day, e.id, 1))
-                      }
-                    />
-                    <Button
-                      label={`Copy ${e.name}`}
-                      disabled={busy}
-                      onPress={() => setCopying(e.id)}
-                    />
-                    <Button
-                      label={`Delete ${e.name}`}
-                      danger
-                      disabled={busy}
-                      onPress={() =>
-                        Alert.alert(
-                          "Delete exercise?",
-                          "Past workout records will be kept.",
-                          [
-                            { text: "Cancel", style: "cancel" },
-                            {
-                              text: "Delete",
-                              style: "destructive",
-                              onPress: () =>
-                                void saveRoutine({
-                                  ...routine,
-                                  days: routine.days.map((d, j) =>
-                                    j === day
-                                      ? d.filter((x) => x.id !== e.id)
-                                      : d,
-                                  ),
-                                }),
-                            },
-                          ],
-                        )
-                      }
-                    />
-                  </View>
-                  {copying === e.id && (
-                    <>
-                      <Text style={styles.text}>Copy to day</Text>
-                      <View style={styles.row}>
-                        {DAYS.map((d, j) => (
-                          <Button
-                            key={d}
-                            label={`Copy to ${d}`}
-                            disabled={busy || day === j}
-                            onPress={() =>
-                              void saveRoutine(
-                                copyExercise(routine, day, e.id, j),
-                              ).then((ok) => {
-                                if (ok) setCopying(null);
-                              })
-                            }
-                          />
-                        ))}
-                      </View>
-                      <Button
-                        label="Cancel copy"
-                        onPress={() => setCopying(null)}
-                      />
-                    </>
+              <Text style={styles.text}>
+                El check registra todas las series como completadas hoy.
+              </Text>
+              {routine.days[day].map((e) => (
+                <ExerciseCard
+                  key={e.id}
+                  exercise={e}
+                  busy={busy}
+                  checked={state.logs.some(
+                    (l) =>
+                      l.date === localDate() &&
+                      l.routineId === routine.id &&
+                      l.exercise.id === e.id,
                   )}
-                </Card>
+                  onToggle={() =>
+                    void mutate((s) =>
+                      toggleCompletion(s, localDate(), routine, e),
+                    )
+                  }
+                  onOptions={() => {
+                    setMenu(e.id);
+                    setCopying(null);
+                  }}
+                />
               ))}
+              {routine.days[day]
+                .filter((e) => e.id === menu)
+                .map((e) => (
+                  <ExerciseMenu
+                    key={e.id}
+                    exercise={e}
+                    busy={busy}
+                    first={routine.days[day][0].id === e.id}
+                    last={
+                      routine.days[day][routine.days[day].length - 1].id ===
+                      e.id
+                    }
+                    day={day}
+                    copying={copying === e.id}
+                    onClose={() => {
+                      setMenu(null);
+                      setCopying(null);
+                    }}
+                    onEdit={() => {
+                      setMenu(null);
+                      setEditor(e);
+                    }}
+                    onMove={(delta) =>
+                      void saveRoutine(
+                        moveExercise(routine, day, e.id, delta),
+                      ).then((ok) => {
+                        if (ok) setMenu(null);
+                      })
+                    }
+                    onCopyMode={() => setCopying(e.id)}
+                    onCopy={(target) =>
+                      void saveRoutine(
+                        copyExercise(routine, day, e.id, target),
+                      ).then((ok) => {
+                        if (ok) {
+                          setMenu(null);
+                          setCopying(null);
+                        }
+                      })
+                    }
+                    onDelete={() =>
+                      Alert.alert(
+                        "¿Eliminar ejercicio?",
+                        "Se conservarán los registros anteriores.",
+                        [
+                          { text: "Cancelar", style: "cancel" },
+                          {
+                            text: "Eliminar",
+                            style: "destructive",
+                            onPress: () =>
+                              void saveRoutine({
+                                ...routine,
+                                days: routine.days.map((d, j) =>
+                                  j === day
+                                    ? d.filter((x) => x.id !== e.id)
+                                    : d,
+                                ),
+                              }).then((ok) => {
+                                if (ok) setMenu(null);
+                              }),
+                          },
+                        ],
+                      )
+                    }
+                  />
+                ))}
             </>
           )}
         </>

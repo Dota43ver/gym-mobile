@@ -42,10 +42,10 @@ test("rejects oversized file before reading and rejects malformed JSON", async (
     canceled: false,
     assets: [{ uri: mockFile.uri, size: 5_000_001 }],
   });
-  await expect(pickBackup()).rejects.toThrow("too large");
+  await expect(pickBackup()).rejects.toThrow("demasiado grande");
   expect(mockFile.text).not.toHaveBeenCalled();
   mockFile.text.mockResolvedValueOnce("{}");
-  await expect(pickBackup()).rejects.toThrow("unsupported");
+  await expect(pickBackup()).rejects.toThrow("no es compatible");
 });
 test("exports readable data and retains it for asynchronous recipient reads", async () => {
   await exportBackup(emptyState());
